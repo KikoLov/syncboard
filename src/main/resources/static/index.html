@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncBoard - 实时协作任务管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            font-size: 32px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border-radius: 20px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 12px;
+            transition: color 0.2s;
+        }
+
+        .logout-btn:hover {
+            color: #f44336;
+        }
+
+        .online-count {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .board-container {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 10px;
+            min-height: calc(100vh - 150px);
+        }
+
+        .column {
+            background: #EBECF0;
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 320px;
+            width: 320px;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+
+        .column:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+
+        .column-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .task-count {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .task-list {
+            min-height: 100px;
+            margin-bottom: 15px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: grab;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid transparent;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .task-card:active {
+            cursor: grabbing;
+        }
+
+        .task-card.priority-high {
+            border-left-color: #f44336;
+        }
+
+        .task-card.priority-medium {
+            border-left-color: #ff9800;
+        }
+
+        .task-card.priority-low {
+            border-left-color: #4CAF50;
+        }
+
+        .task-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .task-description {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .task-priority {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .priority-high {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .priority-medium {
+            background: #fff3e0;
+            color: #ff9800;
+        }
+
+        .priority-low {
+            background: #e8f5e9;
+            color: #4CAF50;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .task-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .task-actions button:hover {
+            background: #f0f0f0;
+        }
+
+        .add-task-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .add-task-btn:hover {
+            background: white;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        /* Task Detail Modal */
+        .modal-large {
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .task-detail-body {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .detail-section {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            background: #fafafa;
+        }
+
+        .detail-section h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .detail-field {
+            margin-bottom: 15px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            color: #333;
+            min-height: 40px;
+        }
+
+        .detail-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .detail-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Comments */
+        .comment-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .comment-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .comment-username {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .comment-content {
+            color: #555;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .comment-actions button {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .comment-actions button:hover {
+            background: #f0f0f0;
+            color: #f44336;
+        }
+
+        .comment-input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .comment-input-area textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .comment-input-area textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .empty-comments {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Dragging State */
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: rotate(3deg);
+        }
+
+        .column.drag-over {
+            background: #d4d7db;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .board-container {
+                flex-direction: column;
+            }
+
+            .column {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .header-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+
+    <!-- WebSocket Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <h2>正在加载看板...</h2>
+    </div>
+
+    <!-- Header -->
+    <div class="header" id="header" style="display: none;">
+        <h1>
+            <span class="logo">📊</span>
+            SyncBoard
+        </h1>
+        <div class="header-actions">
+            <div class="user-info" id="userInfo" style="display: none;">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span class="user-name" id="userName">用户</span>
+                <button class="logout-btn" onclick="handleLogout()">退出</button>
+            </div>
+            <div class="online-count">
+                <span class="online-dot"></span>
+                <span id="onlineUsers">0</span> 人在线
+            </div>
+            <button class="btn btn-secondary" onclick="refreshBoard()">🔄 刷新</button>
+            <button class="btn btn-primary" onclick="openCreateTaskModal()">+ 新建任务</button>
+        </div>
+    </div>
+
+    <!-- Board Container -->
+    <div class="board-container" id="boardContainer">
+        <!-- Columns will be rendered here -->
+    </div>
+
+    <!-- Create Task Modal -->
+    <div class="modal" id="createTaskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新建任务</h2>
+                <button class="close-btn" onclick="closeCreateTaskModal()">&times;</button>
+            </div>
+            <form id="createTaskForm" onsubmit="createTask(event)">
+                <div class="form-group">
+                    <label for="taskTitle">任务标题 *</label>
+                    <input type="text" id="taskTitle" required placeholder="输入任务标题">
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">任务描述</label>
+                    <textarea id="taskDescription" placeholder="输入任务描述（可选）"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="taskColumn">所属列 *</label>
+                    <select id="taskColumn" required>
+                        <option value="">选择列</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskPriority">优先级</label>
+                    <select id="taskPriority">
+                        <option value="1">低</option>
+                        <option value="2" selected>中</option>
+                        <option value="3">高</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateTaskModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div class="modal" id="taskDetailModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="taskDetailTitle">任务详情</h2>
+                <button class="close-btn" onclick="closeTaskDetailModal()">&times;</button>
+            </div>
+
+            <div class="task-detail-body">
+                <!-- Task Info Section -->
+                <div class="detail-section">
+                    <h3>任务信息</h3>
+                    <div class="detail-field">
+                        <label>标题</label>
+                        <div id="detailTitle" class="detail-value"></div>
+                    </div>
+                    <div class="detail-field">
+                        <label>描述</label>
+                        <div id="detailDescription" class="detail-value"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-field">
+                            <label>开始时间</label>
+                            <input type="datetime-local" id="detailStartTime" class="detail-input">
+                        </div>
+                        <div class="detail-field">
+                            <label>结束时间</label>
+                            <input type="datetime-local" id="detailEndTime" class="detail-input">
+                        </div>
+                    </div>
+                    <div class="detail-field">
+                        <label>优先级</label>
+                        <select id="detailPriority" class="detail-input">
+                            <option value="1">低</option>
+                            <option value="2">中</option>
+                            <option value="3">高</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveTaskDetails()">保存更改</button>
+                </div>
+
+                <!-- Comments Section -->
+                <div class="detail-section">
+                    <h3>评论 (<span id="commentCount">0</span>)</h3>
+                    <div class="comment-list" id="commentList">
+                        <!-- Comments will be rendered here -->
+                    </div>
+                    <div class="comment-input-area">
+                        <textarea id="commentInput" placeholder="添加评论..." rows="3"></textarea>
+                        <button class="btn btn-primary" onclick="addComment()">发表评论</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 自动检测 API 地址
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8080/api';
+        const BOARD_ID = 3;
+
+        // State
+        let boardData = {
+            columns: [],
+            tasks: []
+        };
+
+        // Current User
+        let currentUser = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLogin();
+        });
+
+        // Check Login Status
+        function checkLogin() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+
+            if (!token || !userStr) {
+                // Not logged in, redirect to login page
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                currentUser = JSON.parse(userStr);
+                displayUserInfo();
+                joinBoard();  // 加入看板
+                loadBoard();
+                startOnlineCountUpdater();
+                connectWebSocket();
+            } catch (error) {
+                console.error('Failed to parse user info:', error);
+                // Invalid data, redirect to login
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Join Board
+        async function joinBoard() {
+            if (!currentUser) return;
+
+            try {
+                await fetch(`${API_BASE}/boards/${BOARD_ID}/join?userId=${currentUser.id}&username=${encodeURIComponent(currentUser.username || currentUser.nickname)}`, {
+                    method: 'POST'
+                });
+                console.log('已加入看板');
+            } catch (error) {
+                console.error('加入看板失败:', error);
+            }
+        }
+
+        // Leave Board (when page closes)
+        window.addEventListener('beforeunload', () => {
+            if (currentUser) {
+                navigator.sendBeacon(`${API_BASE}/boards/${BOARD_ID}/leave?userId=${currentUser.id}&username=${encodeURIComponent(currentUser.username || currentUser.nickname)}`);
+            }
+        });
+
+        // Display User Info
+        function displayUserInfo() {
+            if (!currentUser) return;
+
+            const userInfo = document.getElementById('userInfo');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+
+            // Set avatar (first letter of nickname)
+            userAvatar.textContent = (currentUser.nickname || currentUser.username || 'U').charAt(0).toUpperCase();
+            userName.textContent = currentUser.nickname || currentUser.username;
+
+            userInfo.style.display = 'flex';
+        }
+
+        // Handle Logout
+        function handleLogout() {
+            if (!confirm('确定要退出登录吗？')) return;
+
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+
+            showNotification('已退出登录');
+
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        // Load Board Data
+        async function loadBoard() {
+            try {
+                const response = await fetch(`${API_BASE}/boards/${BOARD_ID}`);
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    boardData = result.data;
+                    renderBoard();
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('header').style.display = 'flex';
+                } else {
+                    showNotification('加载失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error loading board:', error);
+                showNotification('网络错误，请检查服务是否启动');
+            }
+        }
+
+        // Render Board
+        function renderBoard() {
+            const container = document.getElementById('boardContainer');
+            container.innerHTML = '';
+
+            boardData.columns.forEach(column => {
+                const columnElement = createColumnElement(column);
+                container.appendChild(columnElement);
+            });
+
+            // Populate column select in modal
+            updateColumnSelect();
+        }
+
+        // Create Column Element
+        function createColumnElement(column) {
+            const columnDiv = document.createElement('div');
+            columnDiv.className = 'column';
+            columnDiv.dataset.columnId = column.id;
+
+            // Add drag and drop events
+            columnDiv.addEventListener('dragover', handleDragOver);
+            columnDiv.addEventListener('drop', handleDrop);
+            columnDiv.addEventListener('dragleave', handleDragLeave);
+
+            // Get tasks for this column
+            const columnTasks = boardData.tasks.filter(t => t.columnId === column.id);
+
+            columnDiv.innerHTML = `
+                <div class="column-header">
+                    <span class="column-title">${column.name}</span>
+                    <span class="task-count">${columnTasks.length}</span>
+                </div>
+                <div class="task-list" id="tasks-${column.id}">
+                    ${columnTasks.map(task => createTaskCard(task)).join('')}
+                </div>
+                <button class="add-task-btn" onclick="openCreateTaskModal(${column.id})">
+                    + 添加任务
+                </button>
+            `;
+
+            return columnDiv;
+        }
+
+        // Create Task Card
+        function createTaskCard(task) {
+            const priorityClass = getPriorityClass(task.priority);
+            const priorityText = getPriorityText(task.priority);
+
+            return `
+                <div class="task-card ${priorityClass}"
+                     draggable="true"
+                     data-task-id="${task.id}"
+                     ondragstart="handleDragStart(event)"
+                     ondragend="handleDragEnd(event)">
+                    <div class="task-title">${task.title}</div>
+                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                    <div class="task-meta">
+                        <span class="task-priority ${priorityClass}">${priorityText}</span>
+                        <div class="task-actions">
+                            <button onclick="deleteTask(${task.id})" title="删除">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Priority Helpers
+        function getPriorityClass(priority) {
+            if (priority >= 3) return 'priority-high';
+            if (priority === 2) return 'priority-medium';
+            return 'priority-low';
+        }
+
+        function getPriorityText(priority) {
+            if (priority >= 3) return '高';
+            if (priority === 2) return '中';
+            return '低';
+        }
+
+        // Drag and Drop
+        let draggedTask = null;
+
+        function handleDragStart(e) {
+            draggedTask = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.column').forEach(col => {
+                col.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            const column = e.currentTarget;
+            column.classList.remove('drag-over');
+
+            if (!draggedTask) return;
+
+            const taskId = parseInt(draggedTask.dataset.taskId);
+            const targetColumnId = parseInt(column.dataset.columnId);
+            const task = boardData.tasks.find(t => t.id === taskId);
+
+            if (task && task.columnId !== targetColumnId) {
+                // Move task
+                try {
+                    const response = await fetch(`${API_BASE}/tasks/move`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            taskId: taskId,
+                            targetColumnId: targetColumnId,
+                            previousSortOrder: null,
+                            nextSortOrder: null,
+                            version: task.version
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.code === 200) {
+                        showNotification('任务已移动');
+                        await loadBoard();
+                    } else {
+                        showNotification('移动失败: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error moving task:', error);
+                    showNotification('网络错误');
+                }
+            }
+
+            draggedTask = null;
+        }
+
+        // Modal Functions
+        function openCreateTaskModal(columnId = null) {
+            const modal = document.getElementById('createTaskModal');
+            modal.classList.add('active');
+
+            if (columnId) {
+                document.getElementById('taskColumn').value = columnId;
+            }
+        }
+
+        function closeCreateTaskModal() {
+            const modal = document.getElementById('createTaskModal');
+            modal.classList.remove('active');
+            document.getElementById('createTaskForm').reset();
+        }
+
+        function updateColumnSelect() {
+            const select = document.getElementById('taskColumn');
+            select.innerHTML = '<option value="">选择列</option>';
+            boardData.columns.forEach(col => {
+                select.innerHTML += `<option value="${col.id}">${col.name}</option>`;
+            });
+        }
+
+        // Create Task
+        async function createTask(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+            const columnId = parseInt(document.getElementById('taskColumn').value);
+            const priority = parseInt(document.getElementById('taskPriority').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        boardId: BOARD_ID,
+                        columnId: columnId,
+                        title: title,
+                        description: description,
+                        priority: priority
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    showNotification('任务创建成功');
+                    closeCreateTaskModal();
+                    await loadBoard();
+                } else {
+                    showNotification('创建失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error creating task:', error);
+                showNotification('网络错误');
+            }
+        }
+
+        // Delete Task
+        async function deleteTask(taskId) {
+            if (!confirm('确定要删除这个任务吗？')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    showNotification('任务已删除');
+                    await loadBoard();
+                } else {
+                    showNotification('删除失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+                showNotification('网络错误');
+            }
+        }
+
+        // Refresh Board
+        function refreshBoard() {
+            loadBoard();
+            showNotification('看板已刷新');
+        }
+
+        // Online Count Updater
+        function startOnlineCountUpdater() {
+            updateOnlineCount();
+            setInterval(updateOnlineCount, 30000); // Update every 30 seconds
+        }
+
+        async function updateOnlineCount() {
+            try {
+                const response = await fetch(`${API_BASE}/boards/${BOARD_ID}/online-count`);
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    document.getElementById('onlineUsers').textContent = result.data;
+                }
+            } catch (error) {
+                console.error('Error updating online count:', error);
+            }
+        }
+
+        // WebSocket Connection
+        let stompClient = null;
+
+        function connectWebSocket() {
+            const socket = new SockJS(API_BASE.replace('/api', '') + '/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function(frame) {
+                console.log('WebSocket Connected: ' + frame);
+
+                // Subscribe to board updates
+                stompClient.subscribe('/topic/board/' + BOARD_ID, function(message) {
+                    const data = JSON.parse(message.body);
+                    handleWebSocketMessage(data);
+                });
+
+                showNotification('实时连接已建立');
+            }, function(error) {
+                console.error('WebSocket Error:', error);
+                showNotification('实时连接失败，将使用轮询模式');
+            });
+        }
+
+        function handleWebSocketMessage(message) {
+            console.log('WebSocket Message:', message);
+
+            switch(message.eventType) {
+                case 'TASK_CREATE':
+                case 'TASK_UPDATE':
+                case 'TASK_MOVE':
+                case 'TASK_DELETE':
+                    // Refresh board data
+                    loadBoardData();
+                    break;
+
+                case 'COMMENT_ADD':
+                    // Add comment to detail modal if open
+                    if (currentTaskId && currentTaskId === message.payload.taskId) {
+                        appendCommentToList(message.payload);
+                    }
+                    break;
+
+                case 'COMMENT_DELETE':
+                    // Remove comment from detail modal if open
+                    if (currentTaskId) {
+                        removeCommentFromList(message.payload);
+                    }
+                    break;
+            }
+        }
+
+        // Notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Task Detail Modal
+        let currentTaskId = null;
+        let currentTask = null;
+
+        function openTaskDetailModal(taskId) {
+            currentTaskId = taskId;
+
+            // Fetch task details
+            fetch(`${API_BASE}/tasks/${taskId}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 200) {
+                        currentTask = result.data;
+                        renderTaskDetail(currentTask);
+
+                        // Fetch comments
+                        loadComments(taskId);
+
+                        // Show modal
+                        document.getElementById('taskDetailModal').classList.add('active');
+                    } else {
+                        showNotification('加载任务详情失败');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading task:', error);
+                    showNotification('加载任务详情失败');
+                });
+        }
+
+        function closeTaskDetailModal() {
+            document.getElementById('taskDetailModal').classList.remove('active');
+            currentTaskId = null;
+            currentTask = null;
+        }
+
+        function renderTaskDetail(task) {
+            document.getElementById('taskDetailTitle').textContent = task.title;
+            document.getElementById('detailTitle').textContent = task.title;
+            document.getElementById('detailDescription').textContent = task.description || '无描述';
+
+            // Set time fields
+            if (task.startTime) {
+                document.getElementById('detailStartTime').value = formatDateTimeForInput(task.startTime);
+            }
+            if (task.endTime) {
+                document.getElementById('detailEndTime').value = formatDateTimeForInput(task.endTime);
+            }
+
+            // Set priority
+            document.getElementById('detailPriority').value = task.priority || 2;
+        }
+
+        function formatDateTimeForInput(dateTimeString) {
+            // Convert "2024-01-15 10:30:00" to "2024-01-15T10:30"
+            if (!dateTimeString) return '';
+            return dateTimeString.replace(' ', 'T').substring(0, 16);
+        }
+
+        function formatDateTimeFromInput(inputValue) {
+            // Convert "2024-01-15T10:30" to "2024-01-15 10:30:00"
+            if (!inputValue) return null;
+            return inputValue.replace('T', ' ') + ':00';
+        }
+
+        function saveTaskDetails() {
+            if (!currentTask) return;
+
+            // Get updated values
+            const startTime = document.getElementById('detailStartTime').value;
+            const endTime = document.getElementById('detailEndTime').value;
+            const priority = parseInt(document.getElementById('detailPriority').value);
+
+            // Update task object
+            const updatedTask = {
+                ...currentTask,
+                startTime: formatDateTimeFromInput(startTime),
+                endTime: formatDateTimeFromInput(endTime),
+                priority: priority
+            };
+
+            // Send update request
+            fetch(`${API_BASE}/tasks/${currentTask.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedTask)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200) {
+                    showNotification('任务更新成功');
+                    currentTask = result.data;
+                    loadBoardData(); // Refresh board
+                } else if (result.code === 409) {
+                    showNotification('任务已被其他用户修改，请刷新后重试');
+                } else {
+                    showNotification('更新失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating task:', error);
+                showNotification('更新任务失败');
+            });
+        }
+
+        // Comments Functions
+        function loadComments(taskId) {
+            fetch(`${API_BASE}/task-comments/task/${taskId}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 200) {
+                        renderComments(result.data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading comments:', error);
+                });
+        }
+
+        function renderComments(comments) {
+            const commentList = document.getElementById('commentList');
+            const commentCount = document.getElementById('commentCount');
+
+            commentCount.textContent = comments.length;
+
+            if (comments.length === 0) {
+                commentList.innerHTML = '<div class="empty-comments">暂无评论</div>';
+                return;
+            }
+
+            commentList.innerHTML = comments.map(comment => createCommentHTML(comment)).join('');
+        }
+
+        function createCommentHTML(comment) {
+            const avatar = comment.username ? comment.username.charAt(0).toUpperCase() : 'U';
+            const time = formatCommentTime(comment.createdAt);
+
+            return `
+                <div class="comment-item" data-comment-id="${comment.id}">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <div class="comment-avatar">${avatar}</div>
+                            <span class="comment-username">${comment.username || '未知用户'}</span>
+                        </div>
+                        <span class="comment-time">${time}</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    <div class="comment-actions">
+                        <button onclick="deleteComment(${comment.id}, ${comment.userId})">删除</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatCommentTime(dateTimeString) {
+            if (!dateTimeString) return '';
+            const date = new Date(dateTimeString);
+            const now = new Date();
+            const diff = now - date;
+
+            // Less than 1 minute
+            if (diff < 60000) return '刚刚';
+            // Less than 1 hour
+            if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+            // Less than 1 day
+            if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+            // More than 1 day
+            return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function addComment() {
+            const content = document.getElementById('commentInput').value.trim();
+
+            if (!content) {
+                showNotification('请输入评论内容');
+                return;
+            }
+
+            const comment = {
+                taskId: currentTaskId,
+                userId: currentUser.id,
+                content: content
+            };
+
+            fetch(`${API_BASE}/task-comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(comment)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200) {
+                    document.getElementById('commentInput').value = '';
+                    showNotification('评论发表成功');
+                    // Comment will be added via WebSocket
+                } else {
+                    showNotification('发表评论失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error adding comment:', error);
+                showNotification('发表评论失败');
+            });
+        }
+
+        function deleteComment(commentId, userId) {
+            if (!currentUser || currentUser.id !== userId) {
+                showNotification('只能删除自己的评论');
+                return;
+            }
+
+            if (!confirm('确定要删除这条评论吗？')) {
+                return;
+            }
+
+            fetch(`${API_BASE}/task-comments/${commentId}?userId=${userId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200) {
+                    showNotification('评论删除成功');
+                    // Comment will be removed via WebSocket
+                } else {
+                    showNotification('删除评论失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting comment:', error);
+                showNotification('删除评论失败');
+            });
+        }
+
+        function appendCommentToList(comment) {
+            const commentList = document.getElementById('commentList');
+            const commentCount = document.getElementById('commentCount');
+
+            // Remove empty message if exists
+            const emptyMsg = commentList.querySelector('.empty-comments');
+            if (emptyMsg) {
+                emptyMsg.remove();
+            }
+
+            // Add new comment
+            commentList.insertAdjacentHTML('beforeend', createCommentHTML(comment));
+
+            // Update count
+            const currentCount = parseInt(commentCount.textContent);
+            commentCount.textContent = currentCount + 1;
+        }
+
+        function removeCommentFromList(commentId) {
+            const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
+            if (commentItem) {
+                commentItem.remove();
+
+                // Update count
+                const commentCount = document.getElementById('commentCount');
+                const currentCount = parseInt(commentCount.textContent);
+                commentCount.textContent = Math.max(0, currentCount - 1);
+
+                // Show empty message if no comments
+                const commentList = document.getElementById('commentList');
+                if (commentList.children.length === 0) {
+                    commentList.innerHTML = '<div class="empty-comments">暂无评论</div>';
+                }
+            }
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('createTaskModal');
+            if (event.target === modal) {
+                closeCreateTaskModal();
+            }
+        }
+    </script>
+</body>
+</html>

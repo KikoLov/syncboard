@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - SyncBoard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 24px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 16px;
+            position: relative;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .link-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .link-text a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-text a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #f44336;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-section">
+            <div class="logo">📊</div>
+            <h1>欢迎回来</h1>
+            <p class="subtitle">登录到 SyncBoard</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- 已登录提示 -->
+        <div id="loggedInSection" style="display: none;">
+            <div style="background: #e3f2fd; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <p style="color: #1976d2; margin-bottom: 12px; font-size: 14px;">
+                    你当前已登录为：<strong id="currentUsername"></strong>
+                </p>
+                <button type="button" class="btn btn-secondary" onclick="logoutAndRelogin()" style="width: auto; padding: 10px 24px;">
+                    退出并重新登录
+                </button>
+            </div>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">用户名或邮箱</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    placeholder="输入用户名或邮箱"
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    placeholder="输入密码"
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="remember" name="remember">
+                <label for="remember">记住我</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="loginBtn">
+                登录
+            </button>
+        </form>
+
+        <div class="divider">
+            <span>或</span>
+        </div>
+
+        <p class="link-text">
+            还没有账号？
+            <a href="register.html">立即注册</a>
+        </p>
+    </div>
+
+    <script>
+        // 自动检测 API 地址
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8080/api';
+
+        // 页面加载时检查登录状态
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查URL参数，如果有force=true则清除之前的登录信息
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceLogin = urlParams.get('force');
+
+            if (forceLogin === 'true') {
+                // 清除之前的登录信息
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                // 清除URL参数
+                window.history.replaceState({}, document.title, 'login.html');
+            }
+
+            // 检查是否已经登录
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+
+            if (token && userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    // 已登录，显示退出重新登录选项
+                    showLoggedInSection(user);
+                } catch (error) {
+                    // 用户数据无效，清除
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
+            }
+        });
+
+        // 显示已登录状态区域
+        function showLoggedInSection(user) {
+            const loggedInSection = document.getElementById('loggedInSection');
+            const currentUsername = document.getElementById('currentUsername');
+            const loginForm = document.getElementById('loginForm');
+
+            currentUsername.textContent = user.nickname || user.username || '用户';
+            loggedInSection.style.display = 'block';
+
+            // 可选：隐藏登录表单，或者保持显示让用户可以选择
+            // loginForm.style.display = 'none';
+        }
+
+        // 退出并重新登录
+        function logoutAndRelogin() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+
+            const loggedInSection = document.getElementById('loggedInSection');
+            const loginForm = document.getElementById('loginForm');
+
+            loggedInSection.style.display = 'none';
+            loginForm.style.display = 'block';
+
+            showNotification('已退出登录，请重新登录');
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+
+            if (!username || !password) {
+                showError('请填写所有字段');
+                return;
+            }
+
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = '登录中...';
+
+            try {
+                const response = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (result.code === 200) {
+                    // 登录成功
+                    const { user, token } = result.data;
+
+                    // 保存用户信息到 localStorage
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(user));
+
+                    // 显示成功消息
+                    showNotification('登录成功！正在跳转...');
+
+                    // 跳转到主页
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    showError(result.message || '登录失败，请检查用户名和密码');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '登录';
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                showError('网络错误，请检查服务是否启动');
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

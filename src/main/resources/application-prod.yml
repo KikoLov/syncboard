@@ -1,0 +1,99 @@
+# ============================================
+# SyncBoard 生产环境配置
+# 支持 Render 部署和外部数据库
+# ============================================
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: syncboard
+
+  # 数据库配置（支持环境变量）
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      # 使用环境变量，默认本地配置
+      url: ${DB_URL:jdbc:mysql://localhost:3306/syncboard?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+      username: ${DB_USERNAME:root}
+      password: ${DB_PASSWORD:EA7music666}
+      # 连接池配置（优化内存使用）
+      initial-size: 2
+      min-idle: 2
+      max-active: 10
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+
+  # Redis 配置（支持环境变量）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DB:0}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 2
+          max-wait: 3000ms
+
+  # JSON 配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.syncboard.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 日志配置（生产环境）
+logging:
+  level:
+    root: INFO
+    com.syncboard: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+  file:
+    name: /tmp/logs/syncboard.log
+
+# WebSocket 配置
+websocket:
+  allowed-origins: "*"
+  broker-prefix: /topic
+  app-prefix: /app
+  user-prefix: /user
+
+# 业务配置
+syncboard:
+  fractional-indexing:
+    base: 64
+    precision: 10
+  presence:
+    timeout: 300
+  redis:
+    channel-prefix: "syncboard:board:"

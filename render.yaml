@@ -1,0 +1,34 @@
+services:
+  # 类型：Web Service
+  - type: web
+    name: syncboard
+    env: docker
+    region: oregon
+
+    # Docker 构建配置
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # 环境变量
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_OPTS
+        value: -Xmx512m -Xms256m
+
+    # 健康检查
+    healthCheckPath: /api/actuator/health
+
+    # 实例配置
+    plan: free
+    numInstances: 1
+
+    # 自动部署
+    autoDeploy: true
+
+# 数据库服务（使用 Render 提供的 PostgreSQL）
+# databases:
+#   - name: syncboard-db
+#     databaseName: syncboard
+#     user: syncboard
+#     plan: free
