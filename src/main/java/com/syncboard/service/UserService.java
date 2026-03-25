@@ -3,12 +3,13 @@ package com.syncboard.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.syncboard.dto.LoginRequest;
 import com.syncboard.dto.RegisterRequest;
+import com.syncboard.dto.ResetPasswordRequest;
 import com.syncboard.entity.User;
 import com.syncboard.vo.LoginResponse;
 import com.syncboard.vo.UserVO;
 
 /**
- * 用户服务接口
+ * 用户服务��口
  */
 public interface UserService extends IService<User> {
 
@@ -36,4 +37,9 @@ public interface UserService extends IService<User> {
      * 根据token获取用户
      */
     User getUserByToken(String token);
+
+    /**
+     * 重置密码
+     */
+    void resetPassword(ResetPasswordRequest request);
 }

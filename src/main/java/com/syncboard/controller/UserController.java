@@ -2,6 +2,7 @@ package com.syncboard.controller;
 
 import com.syncboard.dto.LoginRequest;
 import com.syncboard.dto.RegisterRequest;
+import com.syncboard.dto.ResetPasswordRequest;
 import com.syncboard.dto.Result;
 import com.syncboard.service.UserService;
 import com.syncboard.vo.LoginResponse;
@@ -74,5 +75,20 @@ public class UserController {
     public Result<Void> logout() {
         // TODO: 清除token
         return Result.success(null);
+    }
+
+    /**
+     * 重置密码
+     * POST /api/users/reset-password
+     */
+    @PostMapping("/reset-password")
+    public Result<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            userService.resetPassword(request);
+            return Result.success(null);
+        } catch (Exception e) {
+            log.error("重置密码失败", e);
+            return Result.error(400, e.getMessage());
+        }
     }
 }

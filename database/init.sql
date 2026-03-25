@@ -189,6 +189,6 @@ INSERT INTO `sys_user` VALUES (1, 'admin', 'admin@syncboard.com', '$2a$10$N.zmdr
 INSERT INTO `sys_user` VALUES (2, 'user1', 'user1@syncboard.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'ZhangSan', 'https://api.dicebear.com/7.x/avataaars/svg?seed=user1', 1, '2026-01-31 15:35:25', '2026-01-31 15:35:25');
 INSERT INTO `sys_user` VALUES (3, 'user2', 'user2@syncboard.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'LiSi', 'https://api.dicebear.com/7.x/avataaars/svg?seed=user2', 1, '2026-01-31 15:35:25', '2026-01-31 15:35:25');
 INSERT INTO `sys_user` VALUES (7, 'testuser2', 'test2@example.com', '$2a$10$2FwovyPxjO9H862kMzSdLuFBPpW09plhDFo2I18krmvyF/4A55E22', 'Test2', '/api/images/default-avatar.png', 1, NULL, NULL);
-INSERT INTO `sys_user` VALUES (8, 'root', '2029002141@qq.com', '$2a$10$ITBAe2pfCwpF9jib513F2u3VFUDhCp1yctsKFh7MHJBKcSayZ.EEC', 'kiko', '/api/images/default-avatar.png', 1, NULL, NULL);
+INSERT INTO `sys_user` VALUES (8, 'root', '2029002141@qq.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'kiko', '/api/images/default-avatar.png', 1, NULL, NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;

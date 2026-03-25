@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.syncboard.dto.LoginRequest;
 import com.syncboard.dto.RegisterRequest;
+import com.syncboard.dto.ResetPasswordRequest;
 import com.syncboard.entity.User;
 import com.syncboard.mapper.UserMapper;
 import com.syncboard.service.UserService;
@@ -122,5 +123,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // TODO: 从Redis中获取用户信息
         // 简化版本：暂时返回null
         return null;
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        // 验证两次密码是否一致
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("两次密码输入不一致");
+        }
+
+        // 根据用户名查找用户
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, request.getUsername());
+        User user = baseMapper.selectOne(wrapper);
+
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        // 验证邮箱是否匹配
+        if (!user.getEmail().equals(request.getEmail())) {
+            throw new RuntimeException("邮箱与注册时的邮箱不匹配");
+        }
+
+        // 更新密码
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        baseMapper.updateById(user);
+
+        log.info("用户密码重置成功: {}", user.getUsername());
     }
 }
