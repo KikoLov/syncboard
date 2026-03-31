@@ -798,9 +798,10 @@
     </div>
 
     <script>
-        // 自动检测 API 地址
-        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8080/api';
-        const BOARD_ID = 3;
+        // 使用同源 API 地址，兼容反向代理部署
+        const API_BASE = `${window.location.origin}/api`;
+        const DEFAULT_BOARD_ID = 1;
+        let BOARD_ID = Number(new URLSearchParams(window.location.search).get('boardId')) || DEFAULT_BOARD_ID;
 
         // State
         let boardData = {
@@ -906,11 +907,35 @@
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('header').style.display = 'flex';
                 } else {
+                    if (result.message && result.message.includes('看板不存在')) {
+                        const nextBoardId = await findAvailableBoardId();
+                        if (nextBoardId && nextBoardId !== BOARD_ID) {
+                            BOARD_ID = nextBoardId;
+                            await loadBoard();
+                            return;
+                        }
+                    }
+                    document.getElementById('loading').style.display = 'none';
                     showNotification('加载失败: ' + result.message);
                 }
             } catch (error) {
                 console.error('Error loading board:', error);
+                document.getElementById('loading').style.display = 'none';
                 showNotification('网络错误，请检查服务是否启动');
+            }
+        }
+
+        async function findAvailableBoardId() {
+            try {
+                const response = await fetch(`${API_BASE}/boards`);
+                const result = await response.json();
+                if (result.code !== 200 || !Array.isArray(result.data) || result.data.length === 0) {
+                    return null;
+                }
+                return result.data[0].id;
+            } catch (error) {
+                console.error('Error finding available board:', error);
+                return null;
             }
         }
 

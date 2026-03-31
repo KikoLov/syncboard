@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
 /**
  * 看板控制器
@@ -30,6 +31,23 @@ public class BoardController {
     private final ColumnMapper columnMapper;
     private final TaskMapper taskMapper;
     private final PresenceService presenceService;
+
+    /**
+     * 获取看板列表
+     * GET /api/boards
+     */
+    @GetMapping
+    public Result<List<Board>> listBoards() {
+        try {
+            List<Board> boards = boardMapper.selectList(
+                    new LambdaQueryWrapper<Board>().orderByAsc(Board::getId)
+            );
+            return Result.success(boards);
+        } catch (Exception e) {
+            log.error("获取看板列表失败", e);
+            return Result.error("获取看板列表失败: " + e.getMessage());
+        }
+    }
 
     /**
      * 获取看板详情（包含列和任务）
